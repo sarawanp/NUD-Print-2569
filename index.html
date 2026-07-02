@@ -885,11 +885,20 @@ async function apiGet(action, params){
   return await res.json();
 }
 async function apiPost(payload){
-  var res = await fetch(API_URL, {
+  /*
+    Google Apps Script Web App can be blocked by browser CORS when called
+    from GitHub Pages with a normal JSON POST. Send as a simple no-cors
+    text/plain request so doPost(e) receives JSON in e.postData.contents.
+    Note: no-cors returns an opaque response, so the page cannot read JSON
+    back from Apps Script. The dashboard reloads data separately with GET.
+  */
+  await fetch(API_URL, {
     method: "POST",
+    mode: "no-cors",
+    headers: {"Content-Type": "text/plain;charset=utf-8"},
     body: JSON.stringify(payload)
   });
-  return await res.json();
+  return {ok:true, message:"ส่งข้อมูลไปยัง Google Apps Script แล้ว"};
 }
 async function loadJobsFromApi(){
   if(!USE_REMOTE_API) return jobs;
@@ -1232,7 +1241,7 @@ document.getElementById("jobForm").addEventListener("submit", async function(e){
         '<button class="modal-close" onclick="pw.closeModal()">✕</button>'+
         '<p class="modal-title">บันทึกข้อมูลสำเร็จ 🎉</p>'+ 
         '<p class="modal-desc">ระบบบันทึกข้อมูลเข้า Google Sheet และอัปโหลดไฟล์เข้า Google Drive แล้ว</p>'+ 
-        '<div class="rcode mono" style="font-size:18px; color:var(--blue-dark); font-weight:700; margin-bottom:6px;">'+escapeHtml(result.id || '')+'</div>'+ 
+        (result.id ? '<div class="rcode mono" style="font-size:18px; color:var(--blue-dark); font-weight:700; margin-bottom:6px;">'+escapeHtml(result.id || '')+'</div>' : '')+ 
         '<div style="font-size:14px; color:var(--ink-soft);">ยอดชำระ '+fmtMoney(total)+' บาท</div>'+ 
         '<div class="modal-actions" style="justify-content:center;">'+
           '<button class="btn btn-primary" onclick="pw.closeModal()">ตกลง</button>'+ 
