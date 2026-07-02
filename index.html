@@ -299,7 +299,9 @@
   .login-card .brand-badge{margin:0 auto 14px;}
   .login-card h2{margin:0 0 4px;}
   .login-card p{color:var(--ink-soft); font-size:13.5px; margin:0 0 20px;}
-  .login-card input{margin-bottom:12px; text-align:center; letter-spacing:.3em; font-size:18px;}
+  .login-card input{margin-bottom:12px; text-align:center; font-size:16px;}
+  .login-card .login-username{letter-spacing:normal; text-align:left;}
+  .login-card .login-password{letter-spacing:.3em; font-size:18px;}
   .login-hint{font-size:12px; color:var(--ink-faint); margin-top:14px;}
   .err-msg{color:var(--red); font-size:13px; margin-top:8px; min-height:16px;}
 
@@ -564,10 +566,10 @@
         <div class="brand-badge" style="margin:0 auto 14px;">พ</div>
         <h2>เข้าสู่ระบบแอดมิน</h2>
         <p>สำหรับเจ้าหน้าที่ตรวจสอบข้อมูลการพิมพ์งานและยอดเงิน</p>
-        <input type="text" id="adminPass" placeholder="รหัสผ่าน" maxlength="8">
+        <input type="text" id="adminUser" class="login-username" placeholder="ชื่อผู้ใช้" autocomplete="username">
+        <input type="password" id="adminPass" placeholder="รหัสผ่าน" maxlength="8" autocomplete="current-password">
         <button class="btn btn-primary btn-block" id="adminLoginBtn">เข้าสู่ระบบ</button>
         <div class="err-msg" id="adminErr"></div>
-        <div class="login-hint">รหัสผ่านตัวอย่าง: 1234</div>
       </div>
     </div>
 
@@ -1211,19 +1213,24 @@ function refreshAdminGate(){
   if(authed) renderAll();
 }
 document.getElementById("adminLoginBtn").addEventListener("click", doAdminLogin);
+document.getElementById("adminUser").addEventListener("keydown", function(e){
+  if(e.key==="Enter") document.getElementById("adminPass").focus();
+});
 document.getElementById("adminPass").addEventListener("keydown", function(e){
   if(e.key==="Enter") doAdminLogin();
 });
 function doAdminLogin(){
-  var val = document.getElementById("adminPass").value;
-  if(val === "1234"){
+  var user = (document.getElementById("adminUser").value || "").trim();
+  var pass = document.getElementById("adminPass").value;
+  if(user === "nudsc" && pass === "0000"){
     setAdminAuthed(true);
     document.getElementById("adminErr").textContent = "";
+    document.getElementById("adminUser").value = "";
     document.getElementById("adminPass").value = "";
     refreshAdminGate();
     toast("เข้าสู่ระบบแอดมินสำเร็จ","success");
   }else{
-    document.getElementById("adminErr").textContent = "รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่";
+    document.getElementById("adminErr").textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาลองใหม่";
   }
 }
 document.getElementById("adminLogoutBtn").addEventListener("click", function(){
