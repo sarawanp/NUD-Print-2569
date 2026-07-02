@@ -619,6 +619,7 @@
             <div>
               <label for="reportMonth">เลือกเดือนที่ป้อนข้อมูล</label>
               <input type="month" id="reportMonth" style="max-width:220px;">
+              <button class="btn btn-ghost btn-sm" type="button" id="refreshAdminBtn">↻ โหลดข้อมูลใหม่</button>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn btn-ghost btn-sm" id="printMonthlyBtn">พิมพ์สรุปเดือนนี้</button>
@@ -880,8 +881,10 @@ function normalizeSheetJob(item){
 async function apiGet(action, params){
   params = params || {};
   params.action = action;
+  // ใส่ _ts เพื่อกัน browser/cache ดึงข้อมูลเก่าจาก Apps Script
+  params._ts = Date.now();
   var url = API_URL + "?" + Object.keys(params).map(function(k){ return encodeURIComponent(k)+"="+encodeURIComponent(params[k] == null ? "" : params[k]); }).join("&");
-  var res = await fetch(url);
+  var res = await fetch(url, { method: "GET", cache: "no-store" });
   return await res.json();
 }
 async function apiPost(payload){
@@ -902,9 +905,12 @@ async function apiPost(payload){
 }
 async function loadJobsFromApi(){
   if(!USE_REMOTE_API) return jobs;
-  var month = getSelectedMonthKey ? getSelectedMonthKey() : "";
   try{
-    var result = await apiGet("list", {month: month});
+    /*
+      ดึงข้อมูลจาก Google Sheet ทั้งหมดก่อน แล้วค่อยกรองเดือนในหน้าเว็บ
+      เพื่อป้องกันกรณีคอลัมน์ “เดือน” ใน Sheet ว่าง/รูปแบบไม่ตรง ทำให้หน้าแอดมินไม่เห็นรายการ
+    */
+    var result = await apiGet("list", {});
     if(!result.ok) throw new Error(result.message || "โหลดข้อมูลไม่สำเร็จ");
     jobs = (result.data || []).map(normalizeSheetJob);
     return jobs;
@@ -1502,6 +1508,10 @@ if(printMonthlyBtn) printMonthlyBtn.addEventListener("click", printSelectedMonth
 var reportMonthInput = document.getElementById("reportMonth");
 if(reportMonthInput){
   reportMonthInput.addEventListener("change", function(){ renderAll(); });
+}
+var refreshAdminBtn = document.getElementById("refreshAdminBtn");
+if(refreshAdminBtn){
+  refreshAdminBtn.addEventListener("click", function(){ renderAll(); toast("โหลดข้อมูลจาก Google Sheet ใหม่แล้ว", "success"); });
 }
 
 /* ============ ADMIN: DASHBOARD SUMMARY ============ */
